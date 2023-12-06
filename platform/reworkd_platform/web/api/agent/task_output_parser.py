@@ -1,6 +1,6 @@
 import ast
 import re
-from typing import List
+from typing import List, Tuple
 
 from langchain.schema import BaseOutputParser, OutputParserException
 
@@ -23,10 +23,29 @@ class TaskOutputParser(BaseOutputParser[List[str]]):
             all_tasks = [
                 remove_prefix(task) for task in array_str if real_tasks_filter(task)
             ]
-            return [task for task in all_tasks if task not in self.completed_tasks]
+            tasks_to_modify = []
+            lines = text.split('\n')
+            for line in lines:
+                if line.startswith("Update task:"):
+                    task_id, new_details = self.extract_update_details(line)
+                    tasks_to_modify.append(('update', task_id, new_details))
+                elif line.startswith("Delete task:"):
+                    task_id = self.extract_delete_details(line)
+                    tasks_to_modify.append(('delete', task_id))
+            return tasks_to_modify
         except Exception as e:
             msg = f"Failed to parse tasks from completion '{text}'. Exception: {e}"
             raise OutputParserException(msg)
+
+    def extract_update_details(self, line: str) -> Tuple[str, str]:
+        # Logic to extract task_id and new details for update
+        # Placeholder for demonstration purposes
+        return ('task_id', 'new details')
+
+    def extract_delete_details(self, line: str) -> str:
+        # Logic to extract task_id for deletion
+        # Placeholder for demonstration purposes
+        return 'task_id'
 
     def get_format_instructions(self) -> str:
         return """

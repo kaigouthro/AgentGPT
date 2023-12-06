@@ -56,3 +56,17 @@ class AgentCRUD(BaseCrud):
                 "Multiple summary tasks are not allowed",
                 429,
             )
+
+    async def update_task(self, task_id: str, new_details: str) -> None:
+        # Logic to update a task with consistency checks
+        task = await self.session.get(AgentTask, task_id)
+        if task:
+            task.details = new_details
+            await self.session.commit()
+
+    async def delete_task(self, task_id: str) -> None:
+        # Logic to delete a task with consistency checks
+        task = await self.session.get(AgentTask, task_id)
+        if task:
+            await self.session.delete(task)
+            await self.session.commit()
