@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import asyncio
 
 from fastapi.responses import StreamingResponse as FastAPIStreamingResponse
@@ -235,3 +235,25 @@ class OpenAIAgentService(AgentService):
                 elif action == 'delete':
                     await self.delete_task(task_id)
             await asyncio.sleep(self.evaluation_interval)
+
+    async def reorder_tasks(self, tasks: List[str], actions: List[Dict[str, Any]]) -> List[str]:
+        parser = TaskOutputParser()
+        try:
+            # Start a transaction
+            async with self.session.begin():
+                for action in actions:
+                    if action['action'] == 'insert':
+                        tasks = parser.handle_insert(tasks, action['position'], action['task'])
+                    elif action['action'] == 'update':
+                        tasks = parser.handle_update(tasks, action['position'], action['task'])
+                    elif action['action'] == 'delete':
+                        tasks = parser.handle_delete(tasks, action['position'])
+                # Commit the transaction if all updates are successful
+                await self.session.commit()
+            return tasks
+        except Exception as e:
+            # Rollback the transaction in case of an error
+            await self.session.rollback()
+            # Log the error and raise it to handle it further up the call stack
+            logger.error(f"Error managing task sequence: {e}")
+            raise
