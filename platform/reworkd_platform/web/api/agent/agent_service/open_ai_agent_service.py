@@ -1,4 +1,5 @@
 from typing import List, Optional
+import asyncio
 
 from fastapi.responses import StreamingResponse as FastAPIStreamingResponse
 from lanarky.responses import StreamingResponse
@@ -130,7 +131,6 @@ class OpenAIAgentService(AgentService):
         task: str,
         analysis: Analysis,
     ) -> StreamingResponse:
-        # TODO: More mature way of calculating max_tokens
         if self.model.max_tokens > 3000:
             self.model.max_tokens = max(self.model.max_tokens - 1000, 3000)
 
@@ -225,3 +225,13 @@ class OpenAIAgentService(AgentService):
             {"language": self.settings.language},
             media_type="text/event-stream",
         )
+
+    async def main_loop(self):
+        while not self.should_stop:
+            evaluated_tasks = await self.evaluate_tasks(tasks=self.tasks, goal=self.goal)
+            for action, task_id, *details in evaluated_tasks:
+                if action == 'update':
+                    await self.update_task(task_id, details[0])
+                elif action == 'delete':
+                    await self.delete_task(task_id)
+            await asyncio.sleep(self.evaluation_interval)
