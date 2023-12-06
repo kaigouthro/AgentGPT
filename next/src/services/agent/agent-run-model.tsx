@@ -27,6 +27,10 @@ export interface AgentRunModel {
   getCompletedTasks(): Task[];
 
   addTask(taskValue: string): void;
+
+  updateTask(taskId: string, newDetails: string): void;
+
+  deleteTask(taskId: string): void;
 }
 
 export type AgentLifecycle = "offline" | "running" | "pausing" | "paused" | "stopped";
@@ -34,10 +38,12 @@ export type AgentLifecycle = "offline" | "running" | "pausing" | "paused" | "sto
 export class DefaultAgentRunModel implements AgentRunModel {
   private readonly id: string;
   private readonly goal: string;
+  private tasks: Task[];
 
   constructor(goal: string) {
     this.id = v4().toString();
     this.goal = goal;
+    this.tasks = [];
   }
 
   getId = () => this.id;
@@ -70,6 +76,17 @@ export class DefaultAgentRunModel implements AgentRunModel {
 
   updateTaskResult(task: Task, result: string): Task {
     return this.updateTask({ ...task, result });
+  }
+
+  updateTask(taskId: string, newDetails: string): void {
+    const task = this.tasks.find(t => t.id === taskId);
+    if (task) {
+        task.details = newDetails;
+    }
+  }
+
+  deleteTask(taskId: string): void {
+    this.tasks = this.tasks.filter(t => t.id !== taskId);
   }
 
   updateTask(updatedTask: Task): Task {
