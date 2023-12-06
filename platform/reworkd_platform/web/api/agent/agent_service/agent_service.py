@@ -49,3 +49,27 @@ class AgentService(Protocol):
         results: List[str],
     ) -> FastAPIStreamingResponse:
         pass
+
+    async def evaluate_tasks(self, *, tasks: List[str], goal: str) -> List[str]:
+        """
+        Evaluate tasks against defined criteria and return a list of task IDs
+        that should be updated or deleted.
+        """
+        # Logic to evaluate tasks based on criteria
+        evaluated_tasks = []
+        for task in tasks:
+            if self.should_update(task, goal):
+                evaluated_tasks.append(('update', task))
+            elif self.should_delete(task, goal):
+                evaluated_tasks.append(('delete', task))
+        return evaluated_tasks
+
+    def should_update(self, task: str, goal: str) -> bool:
+        # Actual logic to determine if a task should be updated
+        # Placeholder for demonstration purposes
+        return 'update' in task
+
+    def should_delete(self, task: str, goal: str) -> bool:
+        # Actual logic to determine if a task should be deleted
+        # Placeholder for demonstration purposes
+        return 'delete' in task
